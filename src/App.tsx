@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   AppBar,
@@ -20,7 +20,6 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
-import { LineChart } from "@mui/x-charts/LineChart";
 import { analyze, detectFn, label, rank, type Cx } from "./analyzer";
 import {
   BenchResult,
@@ -29,6 +28,12 @@ import {
   makeSizes,
   runBenchmark,
 } from "./benchmark";
+
+const LineChart = lazy(() =>
+  import("@mui/x-charts/LineChart").then(({ LineChart }) => ({
+    default: LineChart,
+  })),
+);
 
 const SAMPLE_A = `function solve(arr) {
   const a = arr.slice();
@@ -525,23 +530,25 @@ export default function App() {
               )}
               {sizes.length > 0 && (
                 <Box sx={{ width: "100%", overflow: "hidden" }}>
-                  <LineChart
-                    height={320}
-                    xAxis={[{ data: sizes, scaleType: "point", label: "Input size (n)" }]}
-                    yAxis={[{ label: "Time per run (ms)" }]}
-                    series={[
-                      {
-                        data: series(bench.a),
-                        label: "Solution A",
-                        connectNulls: true,
-                      },
-                      {
-                        data: series(bench.b),
-                        label: "Solution B",
-                        connectNulls: true,
-                      },
-                    ]}
-                  />
+                  <Suspense fallback={<LinearProgress />}>
+                    <LineChart
+                      height={320}
+                      xAxis={[{ data: sizes, scaleType: "point", label: "Input size (n)" }]}
+                      yAxis={[{ label: "Time per run (ms)" }]}
+                      series={[
+                        {
+                          data: series(bench.a),
+                          label: "Solution A",
+                          connectNulls: true,
+                        },
+                        {
+                          data: series(bench.b),
+                          label: "Solution B",
+                          connectNulls: true,
+                        },
+                      ]}
+                    />
+                  </Suspense>
                 </Box>
               )}
               {!running && sizes.length === 0 && (
